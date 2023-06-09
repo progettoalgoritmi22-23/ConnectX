@@ -8,6 +8,7 @@ import java.util.TreeSet;
 import java.util.Random;
 import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
+import connectx.Player.Heuristic;
 
 /**
  * Software player only a bit smarter than random.
@@ -23,11 +24,6 @@ public class MyPlayer implements CXPlayer {
     private CXGameState yourWin;
     private int TIMEOUT;
     private long START;
-
-    // Tree class
-    private class Tree {
-
-    }
 
     /* Default empty constructor */
     public MyPlayer() {
@@ -51,20 +47,8 @@ public class MyPlayer implements CXPlayer {
      */
     public int selectColumn(CXBoard B) {
         START = System.currentTimeMillis(); // Save starting time
-       
-        return 0;
-    }
-
-    // Evaluation function to assign a score to a board state
-    private int evaluateBoard(CXBoard board) {
-        // Assign scores based on the current state of the board
-        // For example, count the number of player's pieces in winning positions
-        // and subtract the number of opponent's pieces in winning positions
-
-        // Return a positive score if it's a favorable state for the player
-        // and a negative score if it's an unfavorable state
-        // You can experiment with different evaluation heuristics
-
+        Heuristic.evaluateBoard(B);  
+    
         return 0;
     }
 
