@@ -11,21 +11,50 @@ public class Node {
     private Node parent; // Nodo padre, null se root
     private List<Node> children; // Nodi figli
     private int column; // Ultima colonna giocata per arrivare al nodo corrente, -1 se root
+    private int id; // Identificatore del nodo
+    private String label; // Etichetta del nodo
+    private int currentDepth; // Profondità del nodo
+    private int eval = 0; // Valutazione del nodo
 
     // Costruttore per la radice
-    public Node(CXBoard board, Node parent) {
+    public Node(CXBoard board, int id) {
         this.board = board;
-        this.parent = parent;
+        this.parent = null;
         this.children = new ArrayList<>();
         this.column = -1;
+        this.label = "root";
+        this.id = id;
+        this.currentDepth = 0;
     }
 
     // Costruttore per i nodi figli
-    public Node(CXBoard board, Node parent, int column) {
+    public Node(CXBoard board, Node parent, int id, int column) {
         this.board = board;
         this.parent = parent;
         this.children = new ArrayList<>();
         this.column = column;
+        this.label = generateLabel(parent, column);
+        this.id = id;
+        this.currentDepth = parent.getDepth() + 1;
+        this.eval = Evaluation.evaluateBoard(board);
+    }
+
+    // Genera etichetta
+    private String generateLabel(Node parent, int move) {
+        String label = "";
+
+        if (!parent.isRoot()) {
+            label = parent.getLabel() + "-" + String.valueOf(move);
+        } else {
+            label = String.valueOf(move);
+        }
+
+        return label;
+    }
+
+    // Restituisce l'identificatore del nodo
+    public int getId() {
+        return this.id;
     }
 
     public CXBoard getBoard() {
@@ -76,5 +105,13 @@ public class Node {
 
     public int getColumnplayed() {
         return this.column;
+    }
+
+    public String getLabel() {
+        return this.label;
+    }
+
+    public int getDepth() {
+        return this.currentDepth;
     }
 }

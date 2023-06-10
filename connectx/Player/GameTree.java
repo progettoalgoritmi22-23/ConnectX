@@ -14,10 +14,16 @@ import java.util.List;
 
 public class GameTree {
     private Node root; // Nodo radice
+    private int idCounter = 0; // Contatore per gli id dei nodi
+
+    private int generateUniqueId() {
+        idCounter += 1;
+        return idCounter;
+    }
 
     // Costruttore
     public GameTree(CXBoard board) {
-        this.root = new Node(board, null);
+        this.root = new Node(board, generateUniqueId());
     }
 
     // Costruisce l'albero radicato fino a una profondità dataF
@@ -27,8 +33,9 @@ public class GameTree {
 
     // Costruisce un sottoalbero a partire da un nodo
     public void buildSubTree(Node node, int depth) {
-        // Controllo se ho raggiunto il limite di profondità
-        if (depth == 0)
+        // Controllo se ho raggiunto il limite di profondità, o se il nodo è terminale (ovvero che la partite è finita, non che è una foglia)
+        if (depth == 0 || node.getBoard().gameState() == CXGameState.WINP1
+                || node.getBoard().gameState() == CXGameState.WINP2 || node.getBoard().gameState() == CXGameState.DRAW)
             return;
 
         Integer[] moves = node.getBoard().getAvailableColumns(); // Mosse possibili per il nodo
@@ -36,7 +43,9 @@ public class GameTree {
         for (int move : moves) {
             CXBoard myBoard = node.getBoard().copy();
             myBoard.markColumn(move); // Aggiorno la board con la nuova mossa
-            Node child = new Node(myBoard, node, move); // Creo il nodo figlio
+
+            Node child = new Node(myBoard, node, generateUniqueId(), move); // Creo il nodo
+                                                                            // figlio
             node.addChild(child); // Aggiungo il nodo figlio al nodo padre
 
             buildSubTree(child, depth - 1); // Richiamo la funzione ricorsivamente, decrementando la profondità
