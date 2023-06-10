@@ -15,6 +15,9 @@ public class Node {
     private String label; // Etichetta del nodo
     private int currentDepth; // Profondità del nodo
     private int eval = 0; // Valutazione del nodo
+    private boolean isMaximizing; // Indica se il nodo è un nodo massimizzante o meno
+    private int alpha = Integer.MIN_VALUE; // Valore alpha
+    private int beta = Integer.MAX_VALUE; // Valore beta
 
     // Costruttore per la radice
     public Node(CXBoard board, int id) {
@@ -25,6 +28,8 @@ public class Node {
         this.label = "root";
         this.id = id;
         this.currentDepth = 0;
+        this.eval = 0; // Nessuna mossa è stata fatta, quindi non c'è valutazione
+        this.isMaximizing = true; // La radice è sempre un nodo massimizzante
     }
 
     // Costruttore per i nodi figli
@@ -36,7 +41,8 @@ public class Node {
         this.label = generateLabel(parent, column);
         this.id = id;
         this.currentDepth = parent.getDepth() + 1;
-        this.eval = Evaluation.evaluateBoard(board);
+        this.eval = Evaluation.evaluate(this);
+        this.isMaximizing = !parent.getIsMaximizing();
     }
 
     // Genera etichetta
@@ -113,5 +119,29 @@ public class Node {
 
     public int getDepth() {
         return this.currentDepth;
+    }
+
+    public int getEval() {
+        return this.eval;
+    }
+
+    public boolean getIsMaximizing() {
+        return this.isMaximizing;
+    }
+
+    public int getAlpha() {
+        return this.alpha;
+    }
+
+    public int getBeta() {
+        return this.beta;
+    }
+
+    public void setAlpha(int alpha) {
+        this.alpha = alpha;
+    }
+
+    public void setBeta(int beta) {
+        this.beta = beta;
     }
 }
