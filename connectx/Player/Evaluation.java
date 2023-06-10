@@ -11,7 +11,7 @@ import java.util.Random;
 import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
 
-public class Heuristic {
+public class Evaluation {
     private class Player {
         int winningScore;
         int currentScore = 0;
@@ -41,8 +41,8 @@ public class Heuristic {
          */
 
         // Create two players
-        P1 p1 = new Heuristic().new P1();
-        P2 p2 = new Heuristic().new P2();
+        P1 p1 = new Evaluation().new P1();
+        P2 p2 = new Evaluation().new P2();
 
         int P1_CELL_VALUE = 10;
         int P2_CELL_VALUE = -10;

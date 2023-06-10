@@ -8,7 +8,7 @@ import java.util.TreeSet;
 import java.util.Random;
 import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
-import connectx.Player.Heuristic;
+import connectx.Player.Evaluation;
 
 /**
  * Software player only a bit smarter than random.
@@ -47,7 +47,7 @@ public class MyPlayer implements CXPlayer {
      */
     public int selectColumn(CXBoard B) {
         START = System.currentTimeMillis(); // Save starting time
-        Heuristic.evaluateBoard(B);  
+        Evaluation.evaluateBoard(B);  
     
         return 0;
     }
