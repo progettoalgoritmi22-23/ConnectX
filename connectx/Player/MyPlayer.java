@@ -48,6 +48,7 @@ public class MyPlayer implements CXPlayer {
     public int selectColumn(CXBoard B) {
         START = System.currentTimeMillis(); // Save starting time
         Evaluation.evaluateBoard(B);  
+        
     
         return 0;
     }

@@ -5,7 +5,6 @@ import connectx.CXBoard;
 import connectx.CXGameState;
 import connectx.CXCell;
 import connectx.CXCellState;
-
 import java.util.TreeSet;
 import java.util.Random;
 import java.util.Arrays;
