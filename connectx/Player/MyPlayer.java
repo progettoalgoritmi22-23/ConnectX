@@ -24,6 +24,7 @@ public class MyPlayer implements CXPlayer {
     private CXGameState yourWin;
     private int TIMEOUT;
     private long START;
+    private boolean first;
 
     /* Default empty constructor */
     public MyPlayer() {
@@ -35,6 +36,7 @@ public class MyPlayer implements CXPlayer {
         myWin = first ? CXGameState.WINP1 : CXGameState.WINP2;
         yourWin = first ? CXGameState.WINP2 : CXGameState.WINP1;
         TIMEOUT = timeout_in_secs;
+        this.first = first;
     }
 
     /**
@@ -47,12 +49,10 @@ public class MyPlayer implements CXPlayer {
      */
     public int selectColumn(CXBoard B) {
         START = System.currentTimeMillis(); // Save starting time
-        //Evaluation.evaluateBoard(B);  
-        
-    
+        // Evaluation.evaluateBoard(B);
+        GameTree tree = new GameTree(B, first);
         return 0;
     }
-
 
     private void checktime() throws TimeoutException {
         if ((System.currentTimeMillis() - START) / 1000.0 >= TIMEOUT * (99.0 / 100.0))

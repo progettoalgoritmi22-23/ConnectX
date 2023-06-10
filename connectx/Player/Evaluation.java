@@ -11,19 +11,33 @@ import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
 
 public class Evaluation {
-    public static int evaluate(Node node) {
+    public static int evaluate(Node node, boolean isFirstPlayer) {
+        // Ottengo la board dal nodo
+        CXBoard board = node.getBoard().copy();
+
         /*
-         * Assign scores based on the current state of the board
-         * For example, count the number of player's pieces in winning positions
-         * and subtract the number of opponent's pieces in winning positions
-         * Return a positive score if it's a favorable state for the player
-         * and a negative score if it's an unfavorable state
-         * You can experiment with different evaluation heuristics
+         * Controllo se la partita è finita e restituisco il valore della valutazione
+         * corrispondente.
+         * Se è il primo giocatore (devo massimizzare), restituisco il valore massimo,
+         * altrimenti il valore minimo (devo minimizzare)
          */
-        int score = 0;
 
+        // Analizzo vittorie
+        if (board.gameState() == CXGameState.WINP1) {
+            if (isFirstPlayer) {
+                return Integer.MIN_VALUE;
+            } else
+                return Integer.MAX_VALUE;
+        } else if (board.gameState() == CXGameState.WINP2) {
+            if (isFirstPlayer) {
+                return Integer.MAX_VALUE;
+            } else
+                return Integer.MIN_VALUE;
+        }
 
+        // Calcolo la valutazione in base alla strategia scelta
+        int evaluation = 0;
 
-        return score;
+        return evaluation;
     }
 }

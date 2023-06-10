@@ -5,12 +5,13 @@ import connectx.Player.Node;
 public class TreeTest {
     // Testa la costruzione dell'albero
     public static void main(String[] args) {
-        CXBoard board = new CXBoard(6, 7, 4);
-        GameTree tree = new GameTree(board);
-        tree.buildTree(3);
+        CXBoard board = new CXBoard(6, 7, 3);
+        GameTree tree = new GameTree(board, true);
+        //tree.buildWholeTree();
+        tree.buildTree(10);
         System.out.println("Nodes: " + tree.getNodesCount());
         System.out.println("Root max children: " + tree.getRoot().getMaxChildrenCount());
-        printTree(tree.getRoot(), 1);
+        //printTree(tree.getRoot(), 1);
     }
 
     // Funzione ricorsiva per la stampa dell'albero

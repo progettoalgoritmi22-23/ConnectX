@@ -15,6 +15,7 @@ import java.util.List;
 public class GameTree {
     private Node root; // Nodo radice
     private int idCounter = 0; // Contatore per gli id dei nodi
+    private boolean isFirstPlayer; // Indica se il giocatore è il primo (0 - True) o il secondo (1 - False)
 
     private int generateUniqueId() {
         idCounter += 1;
@@ -22,8 +23,9 @@ public class GameTree {
     }
 
     // Costruttore
-    public GameTree(CXBoard board) {
-        this.root = new Node(board, generateUniqueId());
+    public GameTree(CXBoard board, boolean first) {
+        this.root = new Node(board, generateUniqueId(), first);
+        this.isFirstPlayer = first;
     }
 
     // Costruisce l'albero radicato fino a una profondità dataF
@@ -31,9 +33,39 @@ public class GameTree {
         buildSubTree(this.root, depth);
     }
 
+    // Costruisce l'albero radicato fino a che tutti i nodi al livello più profondo
+    // sono terminali (WINP1 || WINP2 || DRAW)
+    public void buildWholeTree() {
+        buildWholeSubTree(this.root);
+    }
+
+    // Costruisce un sottoalbero a partire da un nodo fino a che tutti i nodi al
+    // livello più profondo sono terminali
+    private void buildWholeSubTree(Node node) {
+        // Controllo se ho raggiunto il limite di profondità, o se il nodo è terminale
+        // (ovvero che la partite è finita, non che è una foglia)
+        if (node.getBoard().gameState() == CXGameState.WINP1
+                || node.getBoard().gameState() == CXGameState.WINP2 || node.getBoard().gameState() == CXGameState.DRAW)
+            return;
+
+        Integer[] moves = node.getBoard().getAvailableColumns(); // Mosse possibili per il nodo
+        // Il massimo di figli per nodo è pari a il numero di colonne disponibili
+        for (int move : moves) {
+            CXBoard myBoard = node.getBoard().copy();
+            myBoard.markColumn(move); // Aggiorno la board con la nuova mossa
+
+            Node child = new Node(myBoard, node, generateUniqueId(), move, this.getIsFirstPlayer()); // Creo il nodo
+            // figlio
+            node.addChild(child); // Aggiungo il nodo figlio al nodo padre
+
+            buildWholeSubTree(child); // Richiamo la funzione ricorsivamente, decrementando la profondità
+        }
+    }
+
     // Costruisce un sottoalbero a partire da un nodo
     public void buildSubTree(Node node, int depth) {
-        // Controllo se ho raggiunto il limite di profondità, o se il nodo è terminale (ovvero che la partite è finita, non che è una foglia)
+        // Controllo se ho raggiunto il limite di profondità, o se il nodo è terminale
+        // (ovvero che la partite è finita, non che è una foglia)
         if (depth == 0 || node.getBoard().gameState() == CXGameState.WINP1
                 || node.getBoard().gameState() == CXGameState.WINP2 || node.getBoard().gameState() == CXGameState.DRAW)
             return;
@@ -44,8 +76,8 @@ public class GameTree {
             CXBoard myBoard = node.getBoard().copy();
             myBoard.markColumn(move); // Aggiorno la board con la nuova mossa
 
-            Node child = new Node(myBoard, node, generateUniqueId(), move); // Creo il nodo
-                                                                            // figlio
+            Node child = new Node(myBoard, node, generateUniqueId(), move, this.getIsFirstPlayer()); // Creo il nodo
+            // figlio
             node.addChild(child); // Aggiungo il nodo figlio al nodo padre
 
             buildSubTree(child, depth - 1); // Richiamo la funzione ricorsivamente, decrementando la profondità
@@ -62,6 +94,7 @@ public class GameTree {
         return countNodes(this.root);
     }
 
+    // Restituisce il numero di nodi totali
     private int countNodes(Node node) {
         if (node == null)
             return 0;
@@ -73,5 +106,10 @@ public class GameTree {
             count += countNodes(child);
         }
         return count;
+    }
+
+    // Restutisce true se il giocatore è il primo, false altrimenti
+    public boolean getIsFirstPlayer() {
+        return this.isFirstPlayer;
     }
 }

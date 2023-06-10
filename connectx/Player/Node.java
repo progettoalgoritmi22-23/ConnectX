@@ -20,7 +20,7 @@ public class Node {
     private int beta = Integer.MAX_VALUE; // Valore beta
 
     // Costruttore per la radice
-    public Node(CXBoard board, int id) {
+    public Node(CXBoard board, int id, boolean isMaximizing) {
         this.board = board;
         this.parent = null;
         this.children = new ArrayList<>();
@@ -29,11 +29,11 @@ public class Node {
         this.id = id;
         this.currentDepth = 0;
         this.eval = 0; // Nessuna mossa è stata fatta, quindi non c'è valutazione
-        this.isMaximizing = true; // La radice è sempre un nodo massimizzante
+        this.isMaximizing = isMaximizing; // La radice è sempre un nodo massimizzante
     }
 
     // Costruttore per i nodi figli
-    public Node(CXBoard board, Node parent, int id, int column) {
+    public Node(CXBoard board, Node parent, int id, int column, boolean isFirstPlayer) {
         this.board = board;
         this.parent = parent;
         this.children = new ArrayList<>();
@@ -41,7 +41,7 @@ public class Node {
         this.label = generateLabel(parent, column);
         this.id = id;
         this.currentDepth = parent.getDepth() + 1;
-        this.eval = Evaluation.evaluate(this);
+        this.eval = Evaluation.evaluate(this, isFirstPlayer);
         this.isMaximizing = !parent.getIsMaximizing();
     }
 
