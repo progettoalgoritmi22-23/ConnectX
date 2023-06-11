@@ -144,4 +144,9 @@ public class Node {
     public void setBeta(int beta) {
         this.beta = beta;
     }
+
+    // Restituisce la colonna giocata per arrivare al nodo corrente
+    public int getColumn() {
+        return this.column;
+    }
 }

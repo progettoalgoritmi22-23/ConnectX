@@ -25,18 +25,20 @@ public class Evaluation {
         // Analizzo vittorie
         if (board.gameState() == CXGameState.WINP1) {
             if (isFirstPlayer) {
-                return Integer.MIN_VALUE;
-            } else
                 return Integer.MAX_VALUE;
+            } else
+                return Integer.MIN_VALUE;
         } else if (board.gameState() == CXGameState.WINP2) {
             if (isFirstPlayer) {
-                return Integer.MAX_VALUE;
-            } else
                 return Integer.MIN_VALUE;
+            } else
+                return Integer.MAX_VALUE;
         }
 
         // Calcolo la valutazione in base alla strategia scelta
         int evaluation = 0;
+
+
 
         return evaluation;
     }

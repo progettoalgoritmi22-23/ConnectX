@@ -102,7 +102,7 @@ public class GameTree {
         while (!stack.isEmpty()) {
             Node node = stack.pop();
 
-            if (node.getDepth()==depth || node.getBoard().gameState() == CXGameState.WINP1 ||
+            if (node.getDepth() == depth || node.getBoard().gameState() == CXGameState.WINP1 ||
                     node.getBoard().gameState() == CXGameState.WINP2 ||
                     node.getBoard().gameState() == CXGameState.DRAW) {
                 continue;
@@ -171,4 +171,6 @@ public class GameTree {
     public boolean getIsFirstPlayer() {
         return this.isFirstPlayer;
     }
+
+    
 }

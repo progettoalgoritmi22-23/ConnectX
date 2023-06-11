@@ -51,7 +51,98 @@ public class MyPlayer implements CXPlayer {
         START = System.currentTimeMillis(); // Save starting time
         // Evaluation.evaluateBoard(B);
         GameTree tree = new GameTree(B, first);
-        return 0;
+        System.err.println("\nFIRST: " + first);
+        final int MAX_DEPTH = 3;
+
+        tree.buildTreeIterative(MAX_DEPTH);
+
+        int bestScore = 0;
+        int bestColumn = rand.nextInt(rand.nextInt(B.getAvailableColumns().length));// Intanto scelgo una colonna a caso
+
+        /*FIXME:
+         * java connectx.CXGame 3 3 3 connectx.Player.MyPlayer
+         * 
+         * FIRST: true
+         * Best score: -2147483648
+         * Best column: 1
+         * 
+         * FIRST: true
+         * Best score: -2147483648
+         * Best column: 0
+         * 
+         * FIRST: true
+         * Best score: -2147483648
+         * Best column: 1
+         * 
+         * FIRST: true
+         * Error: MyPlayer interrupted due to exception
+         * java.util.concurrent.ExecutionException: java.lang.IllegalArgumentException:
+         * bound must be positive
+         */
+
+        // Se sono il primo giocatore, devo massimizzare
+        if (first) {
+            bestScore = Integer.MIN_VALUE;
+
+            for (Node child : tree.getRoot().getChildren()) {
+                int score = minimax(child, MAX_DEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, first);
+                // System.out.println("Score: " + score);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestColumn = child.getColumn();
+                }
+            }
+        }
+        // Se sono il secondo giocatore, devo minimizzare
+        else {
+            bestScore = Integer.MAX_VALUE;
+
+            for (Node child : tree.getRoot().getChildren()) {
+                int score = minimax(child, MAX_DEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, first);
+                // System.out.println("Score: " + score);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestColumn = child.getColumn();
+                }
+            }
+        }
+
+        System.out.println("Best score: " + bestScore);
+        System.out.println("Best column: " + bestColumn);
+        // Utils.printTree(tree.getRoot(), MAX_DEPTH);
+
+        return bestColumn;
+    }
+
+    // MiniMax con potatura Alpha-Beta
+    public int minimax(Node node, int depth, int alpha, int beta, boolean isMaximizingPlayer) {
+        if (depth == 0 || node.getBoard().gameState() != CXGameState.OPEN) {
+            return node.getEval();
+        }
+
+        if (isMaximizingPlayer) {
+            // System.out.println("+ Maximizing: " + " Depth: " + depth);
+            int eval = Integer.MIN_VALUE;
+            for (Node child : node.getChildren()) {
+                eval = Math.max(eval, minimax(child, depth - 1, alpha, beta, false));
+                alpha = Math.max(alpha, eval);
+                if (beta <= alpha) {
+                    break; // Potatura Alpha-Beta
+                }
+            }
+            return eval;
+        } else {
+            // System.out.println("- Minimizing" + " Depth: " + depth);
+            int eval = Integer.MAX_VALUE;
+            for (Node child : node.getChildren()) {
+                eval = Math.min(eval, minimax(child, depth - 1, alpha, beta, true));
+                beta = Math.min(beta, eval);
+                if (beta <= alpha) {
+                    break; // Potatura Alpha-Beta
+                }
+            }
+            return eval;
+        }
     }
 
     private void checktime() throws TimeoutException {
