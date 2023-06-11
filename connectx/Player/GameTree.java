@@ -6,6 +6,7 @@ import connectx.CXGameState;
 import connectx.CXCell;
 import java.util.TreeSet;
 import java.util.Random;
+import java.util.Stack;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
@@ -26,11 +27,6 @@ public class GameTree {
     public GameTree(CXBoard board, boolean first) {
         this.root = new Node(board, generateUniqueId(), first);
         this.isFirstPlayer = first;
-    }
-
-    // Costruisce l'albero radicato fino a una profondità dataF
-    public void buildTree(int depth) {
-        buildSubTree(this.root, depth);
     }
 
     // Costruisce l'albero radicato fino a che tutti i nodi al livello più profondo
@@ -59,6 +55,69 @@ public class GameTree {
             node.addChild(child); // Aggiungo il nodo figlio al nodo padre
 
             buildWholeSubTree(child); // Richiamo la funzione ricorsivamente, decrementando la profondità
+        }
+    }
+
+    // Costruisce un sottoalbero a partire da un nodo fino a che tutti i nodi al
+    // livello più profondo sono terminali iterativamente
+    public void buildWholeTreeIterative() {
+        Stack<Node> stack = new Stack<Node>();
+
+        stack.push(this.root);
+
+        while (!stack.isEmpty()) {
+            Node node = stack.pop();
+
+            // Controllo se il nodo è terminale (ovvero che la partite è finita, non che
+            // è una foglia)
+            if (node.getBoard().gameState() == CXGameState.WINP1
+                    || node.getBoard().gameState() == CXGameState.WINP2
+                    || node.getBoard().gameState() == CXGameState.DRAW)
+                continue;
+
+            Integer[] moves = node.getBoard().getAvailableColumns(); // Mosse possibili per il nodo
+            // Il massimo di figli per nodo è pari a il numero di colonne disponibili
+            for (int move : moves) {
+                CXBoard myBoard = node.getBoard().copy();
+                myBoard.markColumn(move); // Aggiorno la board con la nuova mossa
+
+                Node child = new Node(myBoard, node, generateUniqueId(), move, this.getIsFirstPlayer()); // Creo il nodo
+                node.addChild(child); // Aggiungo il nodo figlio al nodo padre
+                stack.push(child); // Aggiungo il nodo figlio allo stack
+            }
+        }
+    }
+
+    // Costruisce l'albero radicato fino a una profondità data
+    public void buildTree(int depth) {
+        buildSubTree(this.root, depth);
+    }
+
+    // Costruisce un sottoalbero a partire da un nodo fino a una profondità data
+    // iterativamente
+    public void buildTreeIterative(int depth) {
+        Stack<Node> stack = new Stack<>();
+        stack.push(root);
+
+        while (!stack.isEmpty()) {
+            Node node = stack.pop();
+
+            if (node.getDepth()==depth || node.getBoard().gameState() == CXGameState.WINP1 ||
+                    node.getBoard().gameState() == CXGameState.WINP2 ||
+                    node.getBoard().gameState() == CXGameState.DRAW) {
+                continue;
+            }
+
+            Integer[] moves = node.getBoard().getAvailableColumns();
+            for (int move : moves) {
+                CXBoard myBoard = node.getBoard().copy();
+                myBoard.markColumn(move);
+
+                Node child = new Node(myBoard, node, generateUniqueId(), move, this.getIsFirstPlayer());
+                node.addChild(child);
+
+                stack.push(child);
+            }
         }
     }
 
