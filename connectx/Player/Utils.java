@@ -7,7 +7,7 @@ public class Utils {
 
         String indent = "  ";
         System.out.print(indent.repeat(depth));
-        System.out.println("D: " + node.getDepth() + " - Label: " + node.getLabel() + " - Eval: " + node.getEval());
+        System.out.println("D: " + node.getDepth() + " - Label: " + node.getLabel() + " - Eval: " + node.getEval()+ " - isMax = " + node.getIsMaximizing());
 
         for (Node child : node.getChildren()) {
             printTree(child, depth + 1);
