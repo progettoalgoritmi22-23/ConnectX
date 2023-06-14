@@ -16,7 +16,6 @@ import java.util.List;
 public class GameTree {
     private Node root; // Nodo radice
     private int idCounter = 0; // Contatore per gli id dei nodi
-    private boolean isFirstPlayer; // Indica se il giocatore è il primo (0 - True) o il secondo (1 - False)
 
     private int generateUniqueId() {
         idCounter += 1;
@@ -26,7 +25,10 @@ public class GameTree {
     // Costruttore
     public GameTree(CXBoard board, boolean first) {
         this.root = new Node(board, generateUniqueId(), first);
-        this.isFirstPlayer = first;
+    }
+
+    public boolean isFirstPlayer() {
+        return MyPlayer.isFirstPlayer();
     }
 
     // Costruisce l'albero radicato fino a che tutti i nodi al livello più profondo
@@ -50,7 +52,7 @@ public class GameTree {
             CXBoard myBoard = node.getBoard().copy();
             myBoard.markColumn(move); // Aggiorno la board con la nuova mossa
 
-            Node child = new Node(myBoard, node, generateUniqueId(), move, this.getIsFirstPlayer()); // Creo il nodo
+            Node child = new Node(myBoard, node, generateUniqueId(), move, this.isFirstPlayer()); // Creo il nodo
             // figlio
             node.addChild(child); // Aggiungo il nodo figlio al nodo padre
 
@@ -81,7 +83,7 @@ public class GameTree {
                 CXBoard myBoard = node.getBoard().copy();
                 myBoard.markColumn(move); // Aggiorno la board con la nuova mossa
 
-                Node child = new Node(myBoard, node, generateUniqueId(), move, this.getIsFirstPlayer()); // Creo il nodo
+                Node child = new Node(myBoard, node, generateUniqueId(), move, this.isFirstPlayer()); // Creo il nodo
                 node.addChild(child); // Aggiungo il nodo figlio al nodo padre
                 stack.push(child); // Aggiungo il nodo figlio allo stack
             }
@@ -113,7 +115,7 @@ public class GameTree {
                 CXBoard myBoard = node.getBoard().copy();
                 myBoard.markColumn(move);
 
-                Node child = new Node(myBoard, node, generateUniqueId(), move, this.getIsFirstPlayer());
+                Node child = new Node(myBoard, node, generateUniqueId(), move, this.isFirstPlayer());
                 node.addChild(child);
 
                 stack.push(child);
@@ -135,7 +137,7 @@ public class GameTree {
             CXBoard myBoard = node.getBoard().copy();
             myBoard.markColumn(move); // Aggiorno la board con la nuova mossa
 
-            Node child = new Node(myBoard, node, generateUniqueId(), move, this.getIsFirstPlayer()); // Creo il nodo
+            Node child = new Node(myBoard, node, generateUniqueId(), move, this.isFirstPlayer()); // Creo il nodo
             // figlio
             node.addChild(child); // Aggiungo il nodo figlio al nodo padre
 
@@ -166,11 +168,4 @@ public class GameTree {
         }
         return count;
     }
-
-    // Restutisce true se il giocatore è il primo, false altrimenti
-    public boolean getIsFirstPlayer() {
-        return this.isFirstPlayer;
-    }
-
-    
 }

@@ -7,8 +7,14 @@ public class Utils {
 
         String indent = "  ";
         System.out.print(indent.repeat(depth));
-        System.out.println("D: " + node.getDepth() + " - Label: " + node.getLabel() + " - Eval: " + node.getEval()+ " - isMax = " + node.getIsMaximizing());
-
+        System.out.print("D: " + node.getDepth());
+        System.out.print(" - Label: " + node.getLabel());
+        System.out.print(" - Eval: " + node.getEval());
+        System.out.print(" - isMax: " + node.getIsMaximizing());
+        //System.out.print(" - Alpha: " + node.getAlpha());
+        //System.out.print(" - Beta: " + node.getBeta());
+        //System.out.print(" - LEAF: " + node.isLeaf());
+        System.out.println();
         for (Node child : node.getChildren()) {
             printTree(child, depth + 1);
         }

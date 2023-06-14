@@ -2,6 +2,9 @@ package connectx.Player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.TimeoutException;
+
 import connectx.CXBoard;
 
 public class Node {
@@ -24,7 +27,7 @@ public class Node {
         this.board = board;
         this.parent = null;
         this.children = new ArrayList<>();
-        this.column = -1;
+        this.column = -1; // La radice non ha una colonna associata
         this.label = "root";
         this.id = id;
         this.currentDepth = 0;
@@ -37,11 +40,16 @@ public class Node {
         this.board = board;
         this.parent = parent;
         this.children = new ArrayList<>();
-        this.column = column;
+        this.column = column; // Ultima colonna giocata per arrivare al nodo corrente
         this.label = generateLabel(parent, column);
         this.id = id;
         this.currentDepth = parent.getDepth() + 1;
-        this.eval = Evaluation.evaluate(this, isFirstPlayer);
+        try {
+            this.eval = Evaluation.evaluate(this, isFirstPlayer);
+        } catch (TimeoutException e) {
+            // TODO riempire
+            eval = 0; // non ho fatto in tempo a valutare il nodo
+        }
         this.isMaximizing = !parent.getIsMaximizing();
     }
 
@@ -83,13 +91,13 @@ public class Node {
         // Controllo se tutti i nodi figli sono vuoti
         int childrenCount = 0;
         for (Node child : getChildren()) {
-            if (child == null) {
+            if (child != null) {
                 childrenCount++;
             }
         }
 
         // Se tutti i nodi figli sono vuoti, il nodo è una foglia
-        return childrenCount == getChildrenCount();
+        return childrenCount == 0;
     }
 
     public boolean isRoot() {
@@ -148,5 +156,25 @@ public class Node {
     // Restituisce la colonna giocata per arrivare al nodo corrente
     public int getColumn() {
         return this.column;
+    }
+
+    // Restituisce, tra i figli, la colonna il cui nodo ha eval massimo
+    public int bestNextColumn() {
+        // Controllo se NON è un nodo foglia
+        if (isLeaf() == false) {
+            Random rand = new Random(System.currentTimeMillis());
+            int bestColumn = rand.nextInt(rand.nextInt(getBoard().getAvailableColumns().length)); // Scelgo una colonna
+                                                                                                  // a caso
+            int bestEval = Integer.MIN_VALUE;
+            for (Node child : getChildren()) {
+                if (child.getEval() > bestEval) {
+                    bestEval = child.getEval();
+                    bestColumn = child.getColumn();
+                }
+            }
+            return bestColumn;
+        } else {
+            return -1;
+        }
     }
 }

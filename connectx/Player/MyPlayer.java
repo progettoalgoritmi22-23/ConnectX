@@ -20,11 +20,11 @@ import connectx.Player.Evaluation;
 
 public class MyPlayer implements CXPlayer {
     private Random rand;
-    private CXGameState myWin;
-    private CXGameState yourWin;
-    private int TIMEOUT;
-    private long START;
-    private boolean first;
+    private static CXGameState myWin;
+    private static CXGameState yourWin;
+    private static int TIMEOUT;
+    private static long START;
+    private static boolean first;
 
     /* Default empty constructor */
     public MyPlayer() {
@@ -37,6 +37,28 @@ public class MyPlayer implements CXPlayer {
         yourWin = first ? CXGameState.WINP2 : CXGameState.WINP1;
         TIMEOUT = timeout_in_secs;
         this.first = first;
+    }
+
+    public static CXGameState getMyWin() {
+        return myWin;
+    }
+
+    public static CXGameState getYourWin() {
+        return yourWin;
+    }
+
+    public static boolean isFirstPlayer() {
+        return first;
+    }
+
+    // DEBUG
+    public static long getStartTime() {
+        return START;
+    }
+
+    // DEBUG
+    public static int getTimeout() {
+        return TIMEOUT;
     }
 
     /**
@@ -52,14 +74,15 @@ public class MyPlayer implements CXPlayer {
         // Evaluation.evaluateBoard(B);
         GameTree tree = new GameTree(B, first);
         System.err.println("\nFIRST: " + first);
-        final int MAX_DEPTH = 3;
+        final int MAX_DEPTH = 5;
 
         tree.buildTreeIterative(MAX_DEPTH);
 
         int bestScore = 0;
         int bestColumn = rand.nextInt(rand.nextInt(B.getAvailableColumns().length));// Intanto scelgo una colonna a caso
 
-        /*FIXME:
+        /*
+         * FIXME:
          * java connectx.CXGame 3 3 3 connectx.Player.MyPlayer
          * 
          * FIRST: true
@@ -145,8 +168,8 @@ public class MyPlayer implements CXPlayer {
         }
     }
 
-    private void checktime() throws TimeoutException {
-        if ((System.currentTimeMillis() - START) / 1000.0 >= TIMEOUT * (99.0 / 100.0))
+    public static void checktime() throws TimeoutException {
+        if ((System.currentTimeMillis() - getStartTime()) / 1000.0 >= getTimeout() * (99.0 / 100.0))
             throw new TimeoutException();
     }
 
