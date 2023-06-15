@@ -19,19 +19,6 @@ public class Hashing {
     }
 
     public long hashBoard(CXBoard board) {
-        /*
-         * long hash = 0;
-         * for (int i = 0; i < board.M; i++) {
-         * for (int j = 0; j < board.N; j++) {
-         * if (board.cellState(i, j) == CXCellState.P1) {
-         * hash ^= zobristHash.table[i][j][0];
-         * } else if (board.cellState(i, j) == CXCellState.P2) {
-         * hash ^= zobristHash.table[i][j][1];
-         * }
-         * }
-         * }
-         * return hash;
-         */
 
         long currentHash = 0;
         for (int i = 0; i < board.M; i++) {

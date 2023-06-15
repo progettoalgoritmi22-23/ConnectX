@@ -8,12 +8,14 @@ public class Utils {
         String indent = "  ";
         System.out.print(indent.repeat(depth));
         System.out.print("D: " + node.getDepth());
-        System.out.print(" - Label: " + node.getLabel());
-        System.out.print(" - Eval: " + node.getEval());
-        System.out.print(" - isMax: " + node.getIsMaximizing());
+        System.out.print(", Label: " + node.getLabel());
+        System.out.print(", Eval: " + node.getEval());
+        //System.out.print(" - isMax: " + node.getIsMaximizing());
+        System.out.print(", isLeaf: " + node.isLeaf());
+        System.out.print(", GameState: " + node.getBoard().gameState());
         // System.out.print(" - Board to string: " + node.getBoard().toString());
         // System.out.print(" - Hashcode: " + node.getBoard().hashCode());
-        System.out.print("- Zobrist: " + node.getZobristHash());
+        //System.out.print("- Zobrist: " + node.getZobristHash());
         // System.out.print(" - Alpha: " + node.getAlpha());
         // System.out.print(" - Beta: " + node.getBeta());
         // System.out.print(" - LEAF: " + node.isLeaf());

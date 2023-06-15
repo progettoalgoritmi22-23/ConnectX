@@ -1,6 +1,7 @@
 package connectx.Player;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
@@ -12,7 +13,7 @@ public class Node {
     // Classe nodo
     private CXBoard board; // Board
     private Node parent; // Nodo padre, null se root
-    private List<Node> children; // Nodi figli
+    private LinkedList<Node> children; // Nodi figli
     private int column; // Ultima colonna giocata per arrivare al nodo corrente, -1 se root
     private int id; // Identificatore del nodo
     private String label; // Etichetta del nodo
@@ -21,13 +22,14 @@ public class Node {
     private boolean isMaximizing; // Indica se il nodo è un nodo massimizzante o meno
     private int alpha = Integer.MIN_VALUE; // Valore alpha
     private int beta = Integer.MAX_VALUE; // Valore beta
+    private boolean isVisitedByMinimax = false; // Indica se il nodo è stato visitato dall'algoritmo alpha-beta
     private long zobristHash; // Hashcode della board
 
     // Costruttore per la radice
     public Node(CXBoard board, int id, boolean isMaximizing, long zobristHash) {
         this.board = board;
         this.parent = null;
-        this.children = new ArrayList<>();
+        this.children = new LinkedList<>();
         this.column = -1; // La radice non ha una colonna associata
         this.label = "root";
         this.id = id;
@@ -41,12 +43,13 @@ public class Node {
     public Node(CXBoard board, Node parent, int id, int column, boolean isFirstPlayer, long zobristHash) {
         this.board = board;
         this.parent = parent;
-        this.children = new ArrayList<>();
+        this.children = new LinkedList<>();
         this.column = column; // Ultima colonna giocata per arrivare al nodo corrente
         this.label = generateLabel(parent, column);
         this.id = id;
         this.currentDepth = parent.getDepth() + 1;
         try {
+            System.out.println("Valutazione nodo " + this.label);
             this.eval = Evaluation.evaluate(this, isFirstPlayer);
         } catch (TimeoutException e) {
             // TODO riempire
@@ -54,6 +57,21 @@ public class Node {
         }
         this.isMaximizing = !parent.getIsMaximizing();
         this.zobristHash = zobristHash;
+    }
+
+    // Imposta eval
+    public void setEval(int eval) {
+        this.eval = eval;
+    }
+
+    // Restituisce true se il nodo è stato visitato dall'algoritmo alpha-beta
+    public boolean isVisitedByMinimax() {
+        return this.isVisitedByMinimax;
+    }
+
+    // Imposta il nodo come visitato dall'algoritmo alpha-beta
+    public void setVisitedByMinimax(boolean visited) {
+        this.isVisitedByMinimax = visited;
     }
 
     // Restituisce hash zobrist
@@ -87,7 +105,7 @@ public class Node {
         return this.parent;
     }
 
-    public List<Node> getChildren() {
+    public LinkedList<Node> getChildren() {
         return this.children;
     }
 
@@ -166,24 +184,9 @@ public class Node {
         return this.column;
     }
 
-    // Restituisce, tra i figli, la colonna il cui nodo ha eval massimo
-    public int bestNextColumn() {
-        // FIXME ora funziona solo per un nodo massimizzante
-        // Controllo se NON è un nodo foglia
-        if (isLeaf() == false) {
-            Random rand = new Random(System.currentTimeMillis());
-            int bestColumn = rand.nextInt(rand.nextInt(getBoard().getAvailableColumns().length)); // Scelgo una colonna
-                                                                                                  // a caso
-            int bestEval = Integer.MIN_VALUE;
-            for (Node child : getChildren()) {
-                if (child.getEval() > bestEval) {
-                    bestEval = child.getEval();
-                    bestColumn = child.getColumn();
-                }
-            }
-            return bestColumn;
-        } else {
-            return -1;
-        }
+    //Svuota la lista dei figli del nodo
+    public void resetChildren() {
+        this.children = new LinkedList<>();
     }
+
 }

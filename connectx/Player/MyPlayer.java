@@ -25,6 +25,7 @@ public class MyPlayer implements CXPlayer {
     private static int TIMEOUT;
     private static long START;
     private static boolean first;
+    private GameTree tree;
 
     /* Default empty constructor */
     public MyPlayer() {
@@ -36,7 +37,8 @@ public class MyPlayer implements CXPlayer {
         myWin = first ? CXGameState.WINP1 : CXGameState.WINP2;
         yourWin = first ? CXGameState.WINP2 : CXGameState.WINP1;
         TIMEOUT = timeout_in_secs;
-        this.first = first;
+        MyPlayer.first = first;
+        tree = null;
     }
 
     public static CXGameState getMyWin() {
@@ -72,100 +74,51 @@ public class MyPlayer implements CXPlayer {
     public int selectColumn(CXBoard B) {
         START = System.currentTimeMillis(); // Save starting time
         // Evaluation.evaluateBoard(B);
-        GameTree tree = new GameTree(B, first);
+        CXBoard tmpBoard = B.copy();
+        // GameTree tree = new GameTree(myBoard, first);
         System.err.println("\nFIRST: " + first);
         final int MAX_DEPTH = 5;
-
-        tree.buildTreeIterative(MAX_DEPTH);
-
-        int bestScore = 0;
-        int bestColumn = rand.nextInt(rand.nextInt(B.getAvailableColumns().length));// Intanto scelgo una colonna a caso
+        int bestColumn = 0;
+        // tree.buildTreeIterative(MAX_DEPTH);
+        // tree.buildWholeTreeIterative();
 
         /*
-         * FIXME:
-         * java connectx.CXGame 3 3 3 connectx.Player.MyPlayer
-         * 
-         * FIRST: true
-         * Best score: -2147483648
-         * Best column: 1
-         * 
-         * FIRST: true
-         * Best score: -2147483648
-         * Best column: 0
-         * 
-         * FIRST: true
-         * Best score: -2147483648
-         * Best column: 1
-         * 
-         * FIRST: true
-         * Error: MyPlayer interrupted due to exception
-         * java.util.concurrent.ExecutionException: java.lang.IllegalArgumentException:
-         * bound must be positive
+         * //Print markedcells
+         * for(CXCell cell : tmpBoard.getMarkedCells()){
+         * System.err.println("Marked cell: " + cell.i + " " + cell.j);
+         * }
          */
 
-        // Se sono il primo giocatore, devo massimizzare
-        if (first) {
-            bestScore = Integer.MIN_VALUE;
-
-            for (Node child : tree.getRoot().getChildren()) {
-                int score = minimax(child, MAX_DEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, first);
-                // System.out.println("Score: " + score);
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestColumn = child.getColumn();
-                }
+        // controllo se non è ancora stata fatta la prima mossa, quindi se non ho ancora
+        // costruito l'albero
+        if (tree == null) {
+            // Controllo chi gioca per primo
+            if (first) {
+                // Piazzo la prima mossa al centro, è sempre la migliore per partire
+                bestColumn = B.N / 2;
+                tmpBoard.markColumn(bestColumn);
+                tree = new GameTree(tmpBoard, first);
+                tree.buildWholeTreeIterative();
+            } else {
+                tree = new GameTree(tmpBoard, first);
+                tree.buildWholeTreeIterative();
+                bestColumn = tree.nextMove();
             }
-        }
-        // Se sono il secondo giocatore, devo minimizzare
-        else {
-            bestScore = Integer.MAX_VALUE;
+        } else {
+            // sono nel caso in cui non è la prima mossa
+            tree.updateMove(tmpBoard.getMarkedCells()[tmpBoard.getMarkedCells().length - 1].j);
+            bestColumn = tree.nextMove();
 
-            for (Node child : tree.getRoot().getChildren()) {
-                int score = minimax(child, MAX_DEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, first);
-                // System.out.println("Score: " + score);
-                if (score < bestScore) {
-                    bestScore = score;
-                    bestColumn = child.getColumn();
-                }
-            }
         }
+        // System.out.println("ultima col: " + tree.getRoot().getColumn());
 
-        System.out.println("Best score: " + bestScore);
+        // int bestColumn = tree.nextMove();
+
+        // System.out.println("Best score: " + bestScore);
         System.out.println("Best column: " + bestColumn);
         // Utils.printTree(tree.getRoot(), MAX_DEPTH);
 
         return bestColumn;
-    }
-
-    // MiniMax con potatura Alpha-Beta
-    public int minimax(Node node, int depth, int alpha, int beta, boolean isMaximizingPlayer) {
-        if (depth == 0 || node.getBoard().gameState() != CXGameState.OPEN) {
-            return node.getEval();
-        }
-
-        if (isMaximizingPlayer) {
-            // System.out.println("+ Maximizing: " + " Depth: " + depth);
-            int eval = Integer.MIN_VALUE;
-            for (Node child : node.getChildren()) {
-                eval = Math.max(eval, minimax(child, depth - 1, alpha, beta, false));
-                alpha = Math.max(alpha, eval);
-                if (beta <= alpha) {
-                    break; // Potatura Alpha-Beta
-                }
-            }
-            return eval;
-        } else {
-            // System.out.println("- Minimizing" + " Depth: " + depth);
-            int eval = Integer.MAX_VALUE;
-            for (Node child : node.getChildren()) {
-                eval = Math.min(eval, minimax(child, depth - 1, alpha, beta, true));
-                beta = Math.min(beta, eval);
-                if (beta <= alpha) {
-                    break; // Potatura Alpha-Beta
-                }
-            }
-            return eval;
-        }
     }
 
     public static void checktime() throws TimeoutException {

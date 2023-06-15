@@ -23,6 +23,8 @@ public class GameTree {
                                                                       // La chiave è la stringa dello stato di
                                                                       // gioco (board.toString()), il valore è il
                                                                       // nodo corrispondente
+    private int MAX_DEPTH = 20;
+
     private Hashing hashing; // Zobrist hashing
 
     private int generateUniqueId() {
@@ -97,6 +99,8 @@ public class GameTree {
                 addNodeToNodesMap(child);
             }
         }
+
+        this.minimax(root, MAX_DEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, this.isFirstPlayer());
     }
 
     // Costruisce un sottoalbero a partire da un nodo fino a che tutti i nodi al
@@ -140,6 +144,8 @@ public class GameTree {
 
             }
         }
+
+        this.minimax(root, MAX_DEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, this.isFirstPlayer());
     }
 
     // Costruisce un sottoalbero a partire da un nodo fino a una profondità data
@@ -243,5 +249,85 @@ public class GameTree {
             count += countNodes(child);
         }
         return count;
+    }
+
+    // Ritorna la prossima, miglior, colonna
+    public int nextMove() {
+        Node nextChild = root.getChildren().peek();
+        System.out.println("Valutazione: " + nextChild.getEval());
+        // Scelgo il nodo con la valutazione più alta
+        for (Node child : root.getChildren()) {
+            if (child.getEval() > nextChild.getEval() && child.isVisitedByMinimax()) {
+                nextChild = child;
+            }
+        }
+
+        // Imposto come unico figlio della radice il nodo scelto
+        root.resetChildren();
+        root.addChild(nextChild);
+        // Sposto la radice al nodo scelto
+        root = nextChild;
+
+        // TODO: espandere il sottoalbero ?
+
+        return root.getColumn();
+    }
+
+    // Esegue algortimo minimax con potatura Alpha-Beta
+    public int minimax(Node node, int depth, int alpha, int beta, boolean isMaximizingPlayer) {
+        if (depth == 0 || node.isLeaf()) {
+            return node.getEval();
+        }
+
+        for (Node child : node.getChildren()) {
+            child.setVisitedByMinimax(false);
+        }
+
+        if (isMaximizingPlayer) {
+            // System.out.println("+ Maximizing: " + " Depth: " + depth);
+            int eval = Integer.MIN_VALUE;
+            for (Node child : node.getChildren()) {
+                eval = Math.max(eval, minimax(child, depth - 1, alpha, beta, false));
+                alpha = Math.max(alpha, eval);
+                child.setVisitedByMinimax(true);
+                if (beta <= alpha) {
+                    break; // Potatura Alpha-Beta
+                }
+            }
+            return eval;
+        } else {
+            // System.out.println("- Minimizing" + " Depth: " + depth);
+            int eval = Integer.MAX_VALUE;
+            for (Node child : node.getChildren()) {
+                eval = Math.min(eval, minimax(child, depth - 1, alpha, beta, true));
+                beta = Math.min(beta, eval);
+                child.setVisitedByMinimax(true);
+                if (beta <= alpha) {
+                    break; // Potatura Alpha-Beta
+                }
+            }
+
+            node.setEval(eval);
+            return eval;
+        }
+    }
+
+    // inoltre aggiorna la radice con il nuovo nodo creato/giocato dall'avversario
+    public void updateMove(int lastColPlayed) {
+        Node playedNode = null;
+
+        for (Node child : root.getChildren()) {
+            if (child.getColumn() == lastColPlayed) {
+                playedNode = child;// ho trovato il nodo corrispondente alla mossa dell'avversario
+            }
+        }
+
+        // se ho trovato il nodo corrispondente, aggiorno il gametree
+        if (playedNode != null) {
+            root.resetChildren();
+            root.addChild(playedNode);
+            root = playedNode;
+        }
+
     }
 }

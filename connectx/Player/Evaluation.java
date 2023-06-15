@@ -23,15 +23,42 @@ public class Evaluation {
 
         // Restituisce la priorità della vittoria, winnerPlayer = 0 se ha vinto il
         // primo, 1 se ha vinto il secondo
-        public int getWinPriority(int winnerPlayer) {
-            if (winnerPlayer == 0) {
-                if (MyPlayer.isFirstPlayer()) {
+        public int getWinPriority(CXGameState gameState) {
+            /*
+             * if (winnerPlayer == 0) {
+             * if (MyPlayer.isFirstPlayer()) {
+             * System.out.println("Vittoria giocatore " + winnerPlayer + " con priorità " +
+             * Integer.MAX_VALUE);
+             * 
+             * return Integer.MAX_VALUE;
+             * } else {
+             * System.out.println("Sconfitta giocatore " + winnerPlayer + " con priorità " +
+             * Integer.MIN_VALUE);
+             * return Integer.MIN_VALUE;
+             * }
+             * } else {
+             * if (MyPlayer.isFirstPlayer()) {
+             * System.out.println("Vittoria giocatore " + winnerPlayer + " con priorità " +
+             * Integer.MAX_VALUE);
+             * return Integer.MIN_VALUE;
+             * } else {
+             * System.out.println("Sconfitta giocatore " + winnerPlayer + " con priorità " +
+             * Integer.MIN_VALUE);
+             * return Integer.MAX_VALUE;
+             * }
+             * }
+             */
+
+            if (MyPlayer.isFirstPlayer()) {
+                // Massimizzante
+                if (gameState == MyPlayer.getMyWin()) {
                     return Integer.MAX_VALUE;
                 } else {
                     return Integer.MIN_VALUE;
                 }
             } else {
-                if (MyPlayer.isFirstPlayer()) {
+                // Minimizzante
+                if (gameState == MyPlayer.getMyWin()) {
                     return Integer.MIN_VALUE;
                 } else {
                     return Integer.MAX_VALUE;
@@ -122,14 +149,9 @@ public class Evaluation {
          * altrimenti il valore minimo (devo minimizzare)
          */
 
-        // FIXME: fai printtre e vedi che non da valori negativi
-        // Analizzo vittorie
-        if (board.gameState() == CXGameState.WINP1) {
-            return priority.getWinPriority(0);
-        } else if (board.gameState() == CXGameState.WINP2) {
-            return priority.getWinPriority(1);
-        } else if (board.gameState() == CXGameState.DRAW) {
-            return priority.getPriority(1);
+        // è un nodo terminale
+        if (node.isLeaf()) {
+            return evaluateLeaf(board, isFirstPlayer, priority);
         }
 
         int evaluation = 0;
@@ -149,6 +171,17 @@ public class Evaluation {
         return evaluation;
     }
 
+    private static int evaluateLeaf(CXBoard board, boolean isFirstPlayer, Priority priority) {
+        // Analizzo vittorie
+        if (board.gameState() == CXGameState.WINP1 || board.gameState() == CXGameState.WINP2) {
+            return priority.getWinPriority(board.gameState());
+        } else if (board.gameState() == CXGameState.DRAW) {
+            return priority.getPriority(1);
+        } else {
+            return 0;
+        }
+    }
+
     private static int evaluateLines(CXBoard board, boolean isFirstPlayer) {
         return 0;
     }
@@ -156,8 +189,6 @@ public class Evaluation {
     private static int evaluateCenter(CXBoard board) {
         return 0;
     }
-
-    
 
     /*
      * private static int evaluateBlockOpponent(CXBoard board, boolean
