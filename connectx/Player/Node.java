@@ -21,9 +21,10 @@ public class Node {
     private boolean isMaximizing; // Indica se il nodo è un nodo massimizzante o meno
     private int alpha = Integer.MIN_VALUE; // Valore alpha
     private int beta = Integer.MAX_VALUE; // Valore beta
+    private long zobristHash; // Hashcode della board
 
     // Costruttore per la radice
-    public Node(CXBoard board, int id, boolean isMaximizing) {
+    public Node(CXBoard board, int id, boolean isMaximizing, long zobristHash) {
         this.board = board;
         this.parent = null;
         this.children = new ArrayList<>();
@@ -33,10 +34,11 @@ public class Node {
         this.currentDepth = 0;
         this.eval = 0; // Nessuna mossa è stata fatta, quindi non c'è valutazione
         this.isMaximizing = isMaximizing; // La radice è sempre un nodo massimizzante
+        this.zobristHash = zobristHash;
     }
 
     // Costruttore per i nodi figli
-    public Node(CXBoard board, Node parent, int id, int column, boolean isFirstPlayer) {
+    public Node(CXBoard board, Node parent, int id, int column, boolean isFirstPlayer, long zobristHash) {
         this.board = board;
         this.parent = parent;
         this.children = new ArrayList<>();
@@ -51,6 +53,12 @@ public class Node {
             eval = 0; // non ho fatto in tempo a valutare il nodo
         }
         this.isMaximizing = !parent.getIsMaximizing();
+        this.zobristHash = zobristHash;
+    }
+
+    // Restituisce hash zobrist
+    public long getZobristHash() {
+        return this.zobristHash;
     }
 
     // Genera etichetta
@@ -160,6 +168,7 @@ public class Node {
 
     // Restituisce, tra i figli, la colonna il cui nodo ha eval massimo
     public int bestNextColumn() {
+        // FIXME ora funziona solo per un nodo massimizzante
         // Controllo se NON è un nodo foglia
         if (isLeaf() == false) {
             Random rand = new Random(System.currentTimeMillis());
