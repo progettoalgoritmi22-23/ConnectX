@@ -18,11 +18,11 @@ import java.util.List;
 public class GameTree {
     private Node root; // Nodo radice
     private int idCounter = 0; // Contatore per gli id dei nodi
-    private HashMap<String, Node> nodesMap = new HashMap<String, Node>(); // Tabella hash per la ricerca dei nodi, così
-                                                                          // gli stati di gioco non vengono duplicati.
-                                                                          // La chiave è la stringa dello stato di
-                                                                          // gioco (board.toString()), il valore è il
-                                                                          // nodo corrispondente
+    private HashMap<Long, Node> nodesMap = new HashMap<Long, Node>(); // Tabella hash per la ricerca dei nodi, così
+                                                                      // gli stati di gioco non vengono duplicati.
+                                                                      // La chiave è la stringa dello stato di
+                                                                      // gioco (board.toString()), il valore è il
+                                                                      // nodo corrispondente
     private Hashing hashing; // Zobrist hashing
 
     private int generateUniqueId() {
@@ -34,23 +34,27 @@ public class GameTree {
     public GameTree(CXBoard board, boolean first) {
         hashing = new Hashing(board);
         this.root = new Node(board, generateUniqueId(), first, hashing.hashBoard(board));
-        nodesMap.put(board.toString(), this.root);
-        hashing = new Hashing(board);
+        addNodeToNodesMap(root);
+    }
+
+    // Restituisce la hash table
+    public HashMap<Long, Node> getHashTable() {
+        return nodesMap;
     }
 
     // Aggiunge un nodo alla tabella hash
     public void addNodeToNodesMap(Node node) {
-        nodesMap.put(node.getBoard().toString(), node);
+        nodesMap.put(hashing.hashBoard(node.getBoard()), node);
     }
 
     // Restituisce il nodo corrispondente allo stato di gioco
     public Node getNodeFromNodesMap(CXBoard board) {
-        return nodesMap.get(board.toString());
+        return nodesMap.get(hashing.hashBoard(board));
     }
 
     // Elimina un nodo dalla tabella hash
     public void removeNodeFromNodesMap(Node node) {
-        nodesMap.remove(node.getBoard().toString());
+        nodesMap.remove(hashing.hashBoard(node.getBoard()));
     }
 
     public boolean isFirstPlayer() {
@@ -58,21 +62,15 @@ public class GameTree {
     }
 
     // Costruisce l'albero radicato fino a che tutti i nodi al livello più profondo
-    // sono terminali (WINP1 || WINP2 || DRAW)
+    // sono terminali (WINP1 || WINP2 || DRAW), è ricorsivo.
     public void buildWholeTree() {
         buildWholeSubTree(this.root);
     }
 
     // Costruisce un sottoalbero a partire da un nodo fino a che tutti i nodi al
-    // livello più profondo sono terminali
+    // livello più profondo sono terminali, è ricorsivo.
     private void buildWholeSubTree(Node node) {
-        // Verifico se lo stato di gioco è già presente nella tabella hash
-        if (nodesMap.containsKey(node.getBoard().toString())) {
-            return; // Se è già presente, non lo aggiungo, e non continuo a costruire il sottoalbero
-                    // relativo a quel nodo
-        } else {
-            addNodeToNodesMap(node);
-        }
+        addNodeToNodesMap(node);
 
         // Controllo se ho raggiunto il limite di profondità, o se il nodo è terminale
         // (ovvero che la partite è finita, non che è una foglia)
@@ -87,74 +85,73 @@ public class GameTree {
             myBoard.markColumn(move); // Aggiorno la board con la nuova mossa
 
             Node child = new Node(myBoard, node, generateUniqueId(), move, this.isFirstPlayer(),
-                    hashing.hashBoard(myBoard)); // Creo il nodo
-            // figlio
-            node.addChild(child); // Aggiungo il nodo figlio al nodo padre
-            buildWholeSubTree(child); // Richiamo la funzione ricorsivamente, decrementando la profondità
+                    hashing.hashBoard(myBoard)); // Creo il nodo figlio
+
+            // Verifico se lo stato di gioco è già presente nella tabella hash
+            if (nodesMap.containsKey(hashing.hashBoard(myBoard))) {
+                continue; // Se è già presente, non lo aggiungo, e non continuo a costruire il sottoalbero
+                          // relativo a quel nodo
+            } else {
+                node.addChild(child); // Aggiungo il nodo figlio al nodo padre
+                buildWholeSubTree(child); // Richiamo la funzione ricorsivamente
+                addNodeToNodesMap(child);
+            }
         }
     }
 
     // Costruisce un sottoalbero a partire da un nodo fino a che tutti i nodi al
     // livello più profondo sono terminali iterativamente
     public void buildWholeTreeIterative() {
-        Stack<Node> stack = new Stack<Node>();
+        Stack<Node> stack = new Stack<>();
 
-        stack.push(this.root);
+        stack.push(root);
+        addNodeToNodesMap(root);
 
         while (!stack.isEmpty()) {
             Node node = stack.pop();
 
-            // Verifico se lo stato di gioco è già presente nella tabella hash
-            if (nodesMap.containsKey(node.getBoard().toString())) {
-                continue;// Se è già presente, non lo aggiungo, e non continuo a costruire il sottoalbero
-                         // relativo a quel nodo
-            } else {
-                addNodeToNodesMap(node);
+            if (node.getBoard().gameState() == CXGameState.WINP1 ||
+                    node.getBoard().gameState() == CXGameState.WINP2 ||
+                    node.getBoard().gameState() == CXGameState.DRAW) {
+                continue;
             }
 
-            // Controllo se il nodo è terminale (ovvero che la partite è finita, non che
-            // è una foglia)
-            if (node.getBoard().gameState() == CXGameState.WINP1
-                    || node.getBoard().gameState() == CXGameState.WINP2
-                    || node.getBoard().gameState() == CXGameState.DRAW)
-                continue;
-
-            Integer[] moves = node.getBoard().getAvailableColumns(); // Mosse possibili per il nodo
-            // Il massimo di figli per nodo è pari a il numero di colonne disponibili
+            Integer[] moves = node.getBoard().getAvailableColumns();
             for (int move : moves) {
                 CXBoard myBoard = node.getBoard().copy();
-                myBoard.markColumn(move); // Aggiorno la board con la nuova mossa
+
+                myBoard.markColumn(move);
 
                 Node child = new Node(myBoard, node, generateUniqueId(), move, this.isFirstPlayer(),
-                        hashing.hashBoard(myBoard)); // Creo il nodo
-                node.addChild(child); // Aggiungo il nodo figlio al nodo padre
-                stack.push(child); // Aggiungo il nodo figlio allo stack
+                        hashing.hashBoard(myBoard));// Creo il nodo figlio
+
+                // Verifico se lo stato di gioco è già presente nella tabella hash dei nodi
+                // visitati
+                if (nodesMap.containsKey(hashing.hashBoard(myBoard))) {
+                    continue; // Se è già presente, non lo aggiungo, e non continuo a costruire il sottoalbero
+                              // relativo a quel nodo
+                } else {
+                    // System.out.println("Aggiungo il nodo " + hashing.hashBoard(myBoard) + " alla
+                    // tabella hash dei nodi vistati");
+                    addNodeToNodesMap(child);
+                    node.addChild(child);
+                    stack.push(child);
+                }
+
             }
         }
-    }
-
-    // Costruisce l'albero radicato fino a una profondità data
-    public void buildTree(int depth) {
-        buildSubTree(this.root, depth);
     }
 
     // Costruisce un sottoalbero a partire da un nodo fino a una profondità data
     // iterativamente
     public void buildTreeIterative(int depth) {
         Stack<Node> stack = new Stack<>();
-        HashSet<Long> visitedNodes = new HashSet<Long>();// Insieme dei nodi visitati
 
         stack.push(root);
-        visitedNodes.add(root.getZobristHash());
+        addNodeToNodesMap(root);
 
         while (!stack.isEmpty()) {
             Node node = stack.pop();
-
-            /*
-             * System.out.println("Nodo: " + node.getBoard().toString() + " Profondità: " +
-             * node.getDepth() + " Label: "
-             * + node.getLabel());
-             */
 
             if (node.getDepth() == depth || node.getBoard().gameState() == CXGameState.WINP1 ||
                     node.getBoard().gameState() == CXGameState.WINP2 ||
@@ -166,50 +163,36 @@ public class GameTree {
             for (int move : moves) {
                 CXBoard myBoard = node.getBoard().copy();
 
-                System.out.println("Pre mark: " + hashing.hashBoard(myBoard));
-
                 myBoard.markColumn(move);
 
-                System.out.println("Post mark: " + hashing.hashBoard(myBoard));
+                Node child = new Node(myBoard, node, generateUniqueId(), move, this.isFirstPlayer(),
+                        hashing.hashBoard(myBoard));// Creo il nodo figlio
 
                 // Verifico se lo stato di gioco è già presente nella tabella hash dei nodi
                 // visitati
-                if (visitedNodes.contains(hashing.hashBoard(myBoard))) {
+                if (nodesMap.containsKey(hashing.hashBoard(myBoard))) {
                     continue; // Se è già presente, non lo aggiungo, e non continuo a costruire il sottoalbero
                               // relativo a quel nodo
                 } else {
-                    System.out.println(
-                            "Aggiungo il nodo " + hashing.hashBoard(myBoard) + " alla tabella hash dei nodi vistati");
-                    visitedNodes.add(hashing.hashBoard(myBoard));
+                    // System.out.println("Aggiungo il nodo " + hashing.hashBoard(myBoard) + " alla
+                    // tabella hash dei nodi vistati");
+                    addNodeToNodesMap(child);
+                    node.addChild(child);
+                    stack.push(child);
                 }
 
-                /*
-                 * // Verifico se il nodo è già stato visitato
-                 * if (visitedNodes.contains(myBoard.toString())) {
-                 * continue;
-                 * } else {
-                 * visitedNodes.add(myBoard.toString());
-                 * }
-                 */
-
-                Node child = new Node(myBoard, node, generateUniqueId(), move, this.isFirstPlayer(),
-                        hashing.hashBoard(myBoard));
-                node.addChild(child);
-
-                stack.push(child);
             }
         }
     }
 
-    // Costruisce un sottoalbero a partire da un nodo
+    // Costruisce l'albero radicato fino a una profondità data, è ricorsivo
+    public void buildTree(int depth) {
+        buildSubTree(this.root, depth);
+    }
+
+    // Costruisce un sottoalbero a partire da un nodo, è ricorsivo
     public void buildSubTree(Node node, int depth) {
-        // Verifico se lo stato di gioco è già presente nella tabella hash
-        if (nodesMap.containsKey(node.getBoard().hashCode())) {
-            return; // Se è già presente, non lo aggiungo, e non continuo a costruire il sottoalbero
-                    // relativo a quel nodo
-        } else {
-            addNodeToNodesMap(node);
-        }
+        addNodeToNodesMap(node);
 
         // Controllo se ho raggiunto il limite di profondità, o se il nodo è terminale
         // (ovvero che la partite è finita, non che è una foglia)
@@ -217,18 +200,24 @@ public class GameTree {
                 || node.getBoard().gameState() == CXGameState.WINP2 || node.getBoard().gameState() == CXGameState.DRAW)
             return;
 
-        Integer[] moves = node.getBoard().getAvailableColumns(); // Mosse possibili per il nodo
         // Il massimo di figli per nodo è pari a il numero di colonne disponibili
+        Integer[] moves = node.getBoard().getAvailableColumns(); // Mosse possibili per il nodo
         for (int move : moves) {
             CXBoard myBoard = node.getBoard().copy();
             myBoard.markColumn(move); // Aggiorno la board con la nuova mossa
 
             Node child = new Node(myBoard, node, generateUniqueId(), move, this.isFirstPlayer(),
-                    hashing.hashBoard(myBoard)); // Creo il nodo
-            // figlio
-            node.addChild(child); // Aggiungo il nodo figlio al nodo padre
+                    hashing.hashBoard(myBoard)); // Creo il nodo figlio
 
-            buildSubTree(child, depth - 1); // Richiamo la funzione ricorsivamente, decrementando la profondità
+            // Verifico se lo stato di gioco è già presente nella tabella hash
+            if (nodesMap.containsKey(hashing.hashBoard(myBoard))) {
+                continue; // Se è già presente, non lo aggiungo, e non continuo a costruire il sottoalbero
+                          // relativo a quel nodo
+            } else {
+                node.addChild(child); // Aggiungo il nodo figlio al nodo padre
+                buildSubTree(child, depth - 1); // Richiamo la funzione ricorsivamente, decrementando la profondità
+                addNodeToNodesMap(child);
+            }
         }
     }
 

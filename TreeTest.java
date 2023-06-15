@@ -7,16 +7,17 @@ import connectx.Player.Utils;
 public class TreeTest {
     // Testa la costruzione dell'albero
     public static void main(String[] args) {
-        CXBoard board = new CXBoard(3, 3, 2);
+        CXBoard board = new CXBoard(4, 4, 4);// Più colonne ho e più tempo ci mette
         GameTree tree = new GameTree(board, true);
+        // tree.buildWholeTreeIterative();
+       //tree.buildWholeTree();
+         tree.buildTree(16);
         //tree.buildWholeTreeIterative();
-        //tree.buildWholeTree();
-        //tree.buildTree(10);
-        tree.buildTreeIterative(5);
+        // tree.buildTreeIterative(5);
         System.out.println("Nodes: " + tree.getNodesCount());
-        //System.out.println("Root max children: " + tree.getRoot().getMaxChildrenCount());
-        Utils.printTree(tree.getRoot(), 5);
+        // System.out.println("Root max children: " +
+        // tree.getRoot().getMaxChildrenCount());
+        // Utils.printTree(tree.getRoot(), 5);
     }
 
-    
 }
