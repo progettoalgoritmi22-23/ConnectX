@@ -150,7 +150,7 @@ public class Evaluation {
          */
 
         // è un nodo terminale
-        if (node.isLeaf()) {
+        if (node.getBoard().gameState()!=CXGameState.OPEN) {
             return evaluateLeaf(board, isFirstPlayer, priority);
         }
 

@@ -49,7 +49,7 @@ public class Node {
         this.id = id;
         this.currentDepth = parent.getDepth() + 1;
         try {
-            System.out.println("Valutazione nodo " + this.label);
+            //System.out.println("Valutazione nodo " + this.label);
             this.eval = Evaluation.evaluate(this, isFirstPlayer);
         } catch (TimeoutException e) {
             // TODO riempire
