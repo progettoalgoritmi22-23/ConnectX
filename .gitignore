@@ -2,3 +2,5 @@
 test/
 *.class
 test.java
+*.py
+MyPlayer3.java

@@ -22,6 +22,8 @@ import connectx.CXPlayer;
 import connectx.CXBoard;
 import connectx.CXGameState;
 import connectx.CXCell;
+import connectx.CXCellState;
+
 import java.util.TreeSet;
 import java.util.Random;
 import java.util.Arrays;
@@ -41,12 +43,14 @@ public class MyPlayer2 implements CXPlayer {
     private int TIMEOUT;
     private long START;
 
-    private boolean first;
+    private boolean first; // ci dice anche se siamo il player massimizzante o minimizzante
 
-    private int alpha = Integer.MIN_VALUE;
-    private int beta = Integer.MAX_VALUE;
+    private final int WINVALUE = 10000000;
 
-    private final int WINVALUE = 1000000;
+    private boolean time_cutoff = false;
+
+    private int playerNumber;// 0 se sono il primo a muovere, 1 se sono il secondo
+    private int opponentNumber;// 1 se sono il primo a muovere, 0 se sono il secondo
 
     /* Default empty constructor */
     public MyPlayer2() {
@@ -59,6 +63,8 @@ public class MyPlayer2 implements CXPlayer {
         yourWin = first ? CXGameState.WINP2 : CXGameState.WINP1;
         TIMEOUT = timeout_in_secs;
         this.first = first;
+        playerNumber = first ? 0 : 1;
+        opponentNumber = first ? 1 : 0;
     }
 
     /*
@@ -88,110 +94,259 @@ public class MyPlayer2 implements CXPlayer {
         Integer[] L = B.getAvailableColumns();
         fisherYates(L); // mescola colonne in modo casuale
 
-        int bestcol = L[0]; // scelgo la prima colonn a caso
-        int eval;
+        int bestcol = L[0]; // scelgo la prima colonna in modo casuale
+        int bestEval = first ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        int eval = 0;
 
-        int maxScore = first ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-
-        CXBoard myBoard = B.copy();
+        CXBoard myBoard = B.copy();// copio la board per non modificare quella originale
 
         for (int col : L) {
+            long maxMoveTime = (TIMEOUT - 1) / L.length;
             myBoard.markColumn(col);
-            int depth = 10;
+
             try {
-                checktime();
-                eval = IterativeDeepening(myBoard, depth);
+                eval = iterativeDeepening(myBoard, maxMoveTime);
             } catch (TimeoutException e) {
                 return bestcol;
             }
 
             myBoard.unmarkColumn();
 
-            if (eval == WINVALUE) {
-                return col;
-            }
-            if (eval > maxScore) {
-                maxScore = eval;
-                bestcol = col;
-            } else {
-                if (eval <= -WINVALUE)
+            if (first) {
+                if (eval >= WINVALUE) {
                     return col;
-                if (eval < maxScore) {
-                    maxScore = eval;
+                }
+
+                if (eval > bestEval) {
+                    bestEval = eval;
+                    bestcol = col;
+                }
+            } else {
+                if (eval <= -WINVALUE) {
+                    return col;
+                }
+
+                if (eval < bestEval) {
+                    bestEval = eval;
                     bestcol = col;
                 }
             }
         }
 
         return bestcol;
-
-        /*
-         * try {
-         * int col = singleMoveWin(B, L);
-         * if (col != -1)
-         * return col;
-         * else
-         * return singleMoveBlock(B, L);
-         * } catch (TimeoutException e) {
-         * System.err.println("Timeout!!! Random column selected");
-         * return save;
-         * }
-         */
     }
 
-    private int IterativeDeepening(CXBoard Board, int depth) {
-        int eval = 0;
-        for (int d = 1; d < depth; d++) {
-            try {
-                checktime();
-                eval = alphaBeta(Board, first, Integer.MIN_VALUE, Integer.MAX_VALUE, d);
-            } catch (TimeoutException e) {
+    // Iterative deepening senza depth limit, o meglio: esso è dato da un tempo che decido
+    // massimo
+    private int iterativeDeepening(CXBoard Board, long maxTime) throws TimeoutException {
+        checktime();
+
+        int depth = 1;
+        int bestEval = 0;
+        time_cutoff = false;
+
+        long endTime = System.currentTimeMillis() + maxTime;
+        boolean flag = true;
+
+        while (flag) {
+            long startTime = System.currentTimeMillis();
+
+            if (startTime >= endTime) {
+                flag = false;
+            }
+
+            int eval = alphaBeta(Board, Integer.MIN_VALUE, Integer.MAX_VALUE, depth, startTime,
+                    endTime - startTime);
+
+            if (eval >= WINVALUE) {
                 return eval;
             }
+
+            if (time_cutoff == false) {
+                bestEval = eval;
+            }
+
+            depth++;
         }
-        return eval;
+
+        time_cutoff = false;
+
+        return bestEval;
     }
 
-    private int alphaBeta(CXBoard Board, boolean player, int alpha, int beta, int depth) {
-        Integer L[] = Board.getAvailableColumns(); // colonne disponibili
+    private int alphaBeta(CXBoard Board, int alpha, int beta, int depth, long startTime,
+            long maxTime) throws TimeoutException {
 
-        int eval = evaluate(Board);
+        boolean isMaxPlayer = Board.currentPlayer() == 0;
 
-        if (depth == 0 || Board.gameState() != CXGameState.OPEN) {
+        int eval = evaluateBoard(Board, isMaxPlayer);
+
+        // controllo se ho superato il tempo massimo
+        if (System.currentTimeMillis() - startTime >= maxTime) {
+            time_cutoff = true;
             return eval;
         }
 
-        if (player) {
-            for (int col : L) {
-                Board.markColumn(col);
-                eval = Math.max(eval, alphaBeta(Board, !player, alpha, beta, depth - 1));
-                Board.unmarkColumn();
-                alpha = Math.max(eval, alpha);
-                if (beta <= alpha)
-                    break;
-            }
-        } else {
-            for (int col : L) {
-                Board.markColumn(col);
-                eval = alphaBeta(Board, !player, alpha, beta, depth - 1);
-                Board.unmarkColumn();
-                beta = Math.min(beta, eval);
-                if (beta <= alpha)
-                    break;
-            }
+        if (depth == 0 || Board.gameState() != CXGameState.OPEN || eval >= WINVALUE || eval <= -WINVALUE) {
+            return eval;
         }
 
-        return eval;
+        if (isMaxPlayer) {
+            for (int col : Board.getAvailableColumns()) {
+                eval = Integer.MIN_VALUE;
+                Board.markColumn(col);
+                eval = Math.max(eval, alphaBeta(Board, alpha, beta, depth - 1, startTime, maxTime));
+                alpha = Math.max(alpha, eval);
+                Board.unmarkColumn();
+
+                if (beta <= alpha) {
+                    break;
+                }
+            }
+
+            return alpha;
+        } else {
+            for (int col : Board.getAvailableColumns()) {
+                eval = Integer.MAX_VALUE;
+                Board.markColumn(col);
+                eval = Math.min(beta, alphaBeta(Board, alpha, beta, depth - 1, startTime, maxTime));
+                beta = Math.min(beta, eval);
+                Board.unmarkColumn();
+
+                if (beta <= alpha) {
+                    break;
+                }
+            }
+
+            return beta;
+        }
+
     }
 
-    private int evaluate(CXBoard Board) {
+    private void printNode(CXBoard Board, int eval) {
+
+    }
+
+    // valuta la board e restituisce un valore in base al giocatore corrente
+    private int evaluateBoard(CXBoard Board, boolean myTurn) {
+        // check win
         if (Board.gameState() != CXGameState.OPEN) {
-            if (Board.gameState() == myWin)
+            if (Board.gameState() == CXGameState.WINP1) {
+                // System.out.println("WINP1: (" + Board.getLastMove().i + ", " +
+                // Board.getLastMove().j + ")");
                 return WINVALUE;
-            else if (Board.gameState() == yourWin)
+            } else if (Board.gameState() == CXGameState.WINP2) {
+                // System.out.println("WINP2: (" + Board.getLastMove().i + ", " +
+                // Board.getLastMove().j + ")");
                 return -WINVALUE;
+            }
         }
-        return 0;
+
+        int myPlayerCount = 0;
+        int opponentCount = 0;
+
+        myPlayerCount = countAlignedCells(Board, playerNumber);
+        opponentCount = countAlignedCells(Board, opponentNumber);
+
+        // System.out.println("Mie pedine allineate: " + myPlayerCount);
+        // System.out.println("Avversario pedine allineate: " + opponentCount);
+
+        return myPlayerCount - opponentCount;
+    }
+
+    // conta le celle di un giocatore dato, ritorna il massimo numero di celle
+    // allineate
+    private int countAlignedCells(CXBoard B, int player) {
+        CXCellState[] playerCell = { CXCellState.P1, CXCellState.P2 }; // array di CXCellState per accedere al giocatore
+                                                                       // corrente
+        int count = 0;
+
+        int maxVerticalCells = 0;
+        int maxHorizontalCells = 0;
+        int maxDiagonalCells = 0;
+        int maxAntiDiagonalCells = 0;
+
+        // Verticale
+        for (int i = 0; i < B.N; i++) {
+            int foundCells = 0;
+
+            for (int j = 0; j < B.M; j++) {
+                if (B.cellState(j, i) == playerCell[player]) {
+                    foundCells++;
+                    if (foundCells > maxVerticalCells) {
+                        maxVerticalCells = foundCells;
+                    }
+                } else {
+                    foundCells = 0;
+                }
+            }
+        }
+
+        count = maxVerticalCells;
+
+        // Orizzontale
+        for (int i = 0; i < B.M; i++) {
+            int foundCells = 0;
+
+            for (int j = 0; j < B.N; j++) {
+                if (B.cellState(i, j) == playerCell[player]) {
+                    foundCells++;
+                    if (foundCells > maxHorizontalCells) {
+                        maxHorizontalCells = foundCells;
+                    }
+                } else {
+                    foundCells = 0;
+                }
+            }
+        }
+
+        count = Math.max(count, maxHorizontalCells);
+
+        // Diagonale
+        for (int i = 0; i < B.M; i++) {
+            for (int j = 0; j < B.N; j++) {
+                int foundCells = 0;
+                int k = 0;
+
+                while (i + k < B.M && j + k < B.N) {
+                    if (B.cellState(i + k, j + k) == playerCell[player]) {
+                        foundCells++;
+                        if (foundCells > maxDiagonalCells) {
+                            maxDiagonalCells = foundCells;
+                        }
+                    } else {
+                        foundCells = 0;
+                    }
+                    k++;
+                }
+            }
+        }
+
+        count = Math.max(count, maxDiagonalCells);
+
+        // Anti-Diagonale
+        for (int i = 0; i < B.M; i++) {
+            for (int j = 0; j < B.N; j++) {
+                int foundCells = 0;
+                int k = 0;
+
+                while (i + k < B.M && j - k >= 0) {
+                    if (B.cellState(i + k, j - k) == playerCell[player]) {
+                        foundCells++;
+                        if (foundCells > maxAntiDiagonalCells) {
+                            maxAntiDiagonalCells = foundCells;
+                        }
+                    } else {
+                        foundCells = 0;
+                    }
+                    k++;
+                }
+            }
+        }
+
+        count = Math.max(count, maxAntiDiagonalCells);
+
+        return count;
     }
 
     private void checktime() throws TimeoutException {
@@ -199,63 +354,7 @@ public class MyPlayer2 implements CXPlayer {
             throw new TimeoutException();
     }
 
-    /**
-     * Check if we can win in a single move
-     *
-     * Returns the winning column if there is one, otherwise -1
-     */
-    private int singleMoveWin(CXBoard B, Integer[] L) throws TimeoutException {
-        for (int i : L) {
-            checktime(); // Check timeout at every iteration
-            CXGameState state = B.markColumn(i);
-            if (state == myWin)
-                return i; // Winning column found: return immediately
-            B.unmarkColumn();
-        }
-        return -1;
-    }
-
-    /**
-     * Check if we can block adversary's victory
-     *
-     * Returns a blocking column if there is one, otherwise a random one
-     */
-    private int singleMoveBlock(CXBoard B, Integer[] L) throws TimeoutException {
-        TreeSet<Integer> T = new TreeSet<Integer>(); // We collect here safe column indexes
-
-        for (int i : L) {
-            checktime();
-            T.add(i); // We consider column i as a possible move
-            B.markColumn(i);
-
-            int j;
-            boolean stop;
-
-            for (j = 0, stop = false; j < L.length && !stop; j++) {
-                // try {Thread.sleep((int)(0.2*1000*TIMEOUT));} catch (Exception e) {} //
-                // Uncomment to test timeout
-                checktime();
-                if (!B.fullColumn(L[j])) {
-                    CXGameState state = B.markColumn(L[j]);
-                    if (state == yourWin) {
-                        T.remove(i); // We ignore the i-th column as a possible move
-                        stop = true; // We don't need to check more
-                    }
-                    B.unmarkColumn(); //
-                }
-            }
-            B.unmarkColumn();
-        }
-
-        if (T.size() > 0) {
-            Integer[] X = T.toArray(new Integer[T.size()]);
-            return X[rand.nextInt(X.length)];
-        } else {
-            return L[rand.nextInt(L.length)];
-        }
-    }
-
     public String playerName() {
-        return "L1";
+        return "notL1";
     }
 }
