@@ -1,3 +1,5 @@
+//Enrico Ferraiolo 0001020354
+
 package connectx.ABP;
 
 import connectx.CXPlayer;
@@ -33,7 +35,7 @@ public class ABP implements CXPlayer {
     public ABP() {
     }
 
-    // Θ(1)
+    // O(1)
     public void initPlayer(int M, int N, int K, boolean first, int timeout_in_secs) {
         // New random seed for each game
         rand = new Random(System.currentTimeMillis());
@@ -48,7 +50,7 @@ public class ABP implements CXPlayer {
     /**
      * Seleziona la miglior colonna da giocare eseguendo iterative deepening con
      * alpha-beta pruning e limite sulla profondità
-     * Θ()
+     * O(𝐿𝑑 * 𝑚^𝑑)
      */
     public int selectColumn(CXBoard B) {
         START = System.currentTimeMillis(); // Save starting time
@@ -101,7 +103,7 @@ public class ABP implements CXPlayer {
 
     /*
      * Iterative deepening con limite sulla profondità
-     * Θ(m^d)*d = Θ(d*m^d),   m = numero di mosse possibili, d = profondità
+     * O(m^d)*d = O(d*m^d), m = numero di mosse possibili, d = profondità
      */
     private int iterativeDeepening(CXBoard Board, boolean isMaxPlayer, int depth, int maxMoves)
             throws TimeoutException {
@@ -139,9 +141,8 @@ public class ABP implements CXPlayer {
     }
 
     /*
-     * ritorna true se il tempo sta per scadere (o è già scaduto), ovvero se il
-     * tempo rimanente è minore di 1 secondo
-     * Θ(1)
+     * Ritorna true se il tempo sta per scadere (o è già scaduto)
+     * O(1)
      */
     private boolean timeIsRunningOut(long moveTime, long endTime) {
         if (System.currentTimeMillis() >= endTime + moveTime) {
@@ -153,7 +154,7 @@ public class ABP implements CXPlayer {
 
     /*
      * Alpha-Beta Pruning con limite sulla profondità
-     * Θ(m^d) + Θ(MNK) = Θ(m^d), m = numero di mosse possibili, d = profondità
+     * O(m^d) + O(MNK) = O(m^d), m = numero di mosse possibili, d = profondità
      */
     private int alphaBeta(CXBoard Board, boolean isMaxPlayer, int alpha, int beta, int depth) {
         int eval = evaluateBoard(Board, isMaxPlayer);
@@ -198,8 +199,9 @@ public class ABP implements CXPlayer {
 
     /*
      * Valuta la board in base al numero di celle allineate per ogni giocatore,
-     * inoltre la board si trova in uno stato di vittoria o sconfitta o patta.
-     * Θ(1) + 2*Θ(MNK) = Θ(MNK)
+     * inoltre valuta la board quando si trova in uno stato di vittoria o sconfitta
+     * o patta.
+     * O(1) + 2*O(MNK) = O(MNK)
      */
     private int evaluateBoard(CXBoard Board, boolean myTurn) {
         // check win
@@ -211,12 +213,12 @@ public class ABP implements CXPlayer {
             } else if (Board.gameState() == CXGameState.DRAW) {
                 if (myTurn) {
                     if (first)
-                        return DRAWVALUE; //Massimizzo
+                        return DRAWVALUE; // Massimizzo
                     else
                         return -DRAWVALUE;
                 } else {
                     if (first)
-                        return -DRAWVALUE; //Minimizzo
+                        return -DRAWVALUE; // Minimizzo
                     else
                         return DRAWVALUE;
                 }
@@ -237,7 +239,7 @@ public class ABP implements CXPlayer {
      * Conta le celle di un giocatore dato, ritorna il massimo numero di celle
      * allineate: prende in considerazione le celle allineate in verticale,
      * orizzontale, diagonale e anti-diagonale.
-     * Θ(MNK), K=min(M,N)
+     * O(MNK), K=min(M,N)
      */
     private int countAlignedCells(CXBoard B, int player) {
         CXCellState[] playerCell = { CXCellState.P1, CXCellState.P2 }; // array di CXCellState per accedere al giocatore
@@ -249,7 +251,7 @@ public class ABP implements CXPlayer {
         int maxDiagonalCells = 0;
         int maxAntiDiagonalCells = 0;
 
-        // Verticale, Θ(NM)
+        // Verticale, O(NM)
         for (int i = 0; i < B.N; i++) {
             int foundCells = 0;
 
@@ -267,7 +269,7 @@ public class ABP implements CXPlayer {
 
         count = maxVerticalCells;
 
-        // Orizzontale Θ(MN)
+        // Orizzontale O(MN)
         for (int i = 0; i < B.M; i++) {
             int foundCells = 0;
 
@@ -285,7 +287,7 @@ public class ABP implements CXPlayer {
 
         count = Math.max(count, maxHorizontalCells);
 
-        // Diagonale Θ(MN*min(M,N)) = Θ(MNK), K=min(M,N)
+        // Diagonale O(MN*min(M,N)) = O(MNK), K=min(M,N)
         for (int i = 0; i < B.M; i++) {
             for (int j = 0; j < B.N; j++) {
                 int foundCells = 0;
@@ -307,7 +309,7 @@ public class ABP implements CXPlayer {
 
         count = Math.max(count, maxDiagonalCells);
 
-        // Anti-Diagonale Θ(MN*min(M,N)) = Θ(MNK), K=min(M,N)
+        // Anti-Diagonale O(MN*min(M,N)) = O(MNK), K=min(M,N)
         for (int i = 0; i < B.M; i++) {
             for (int j = 0; j < B.N; j++) {
                 int foundCells = 0;
@@ -333,7 +335,7 @@ public class ABP implements CXPlayer {
     }
 
     /*
-     * Θ(1)
+     * O(1)
      */
     private void checktime() throws TimeoutException {
         if ((System.currentTimeMillis() - START) / 1000.0 >= TIMEOUT * (99.0 / 100.0))
