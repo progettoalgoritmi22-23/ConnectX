@@ -1,4 +1,4 @@
-package connectx.Player;
+package connectx.ABP;
 
 import connectx.CXPlayer;
 import connectx.CXBoard;
@@ -211,12 +211,12 @@ public class ABP implements CXPlayer {
             } else if (Board.gameState() == CXGameState.DRAW) {
                 if (myTurn) {
                     if (first)
-                        return DRAWVALUE;
+                        return DRAWVALUE; //Massimizzo
                     else
                         return -DRAWVALUE;
                 } else {
                     if (first)
-                        return -DRAWVALUE;
+                        return -DRAWVALUE; //Minimizzo
                     else
                         return DRAWVALUE;
                 }
