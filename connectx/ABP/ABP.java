@@ -50,7 +50,7 @@ public class ABP implements CXPlayer {
     /**
      * Seleziona la miglior colonna da giocare eseguendo iterative deepening con
      * alpha-beta pruning e limite sulla profondità
-     * O(𝐿𝑑 * 𝑚^𝑑)
+     * O(Ld * m^d)
      */
     public int selectColumn(CXBoard B) {
         START = System.currentTimeMillis(); // Save starting time
