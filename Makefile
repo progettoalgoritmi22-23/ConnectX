@@ -22,5 +22,5 @@ clean:
 
 #run a debug game and take parameters from command line
 run: build
-	@echo Running MyPlayer vs Human, 4 6 4
-	@java connectx.CXGame 4 6 4 connectx.Player.MyPlayer
+	@echo Running ABP vs Human, 4 6 4
+	@java connectx.CXGame 4 6 4 connectx.ABP.ABP
